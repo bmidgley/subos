@@ -41,10 +41,13 @@ radio.onReceivedString(function (receivedString) {
         control.waitMicros(1000 * randint(0, 1000))
         ping(1000, "pong")
     }
+    if (messages[0] == "torpedo") {
+        tsound(+messages[1], +messages[2])
+    }
 })
 input.onButtonPressed(Button.B, function () {
     if (ttime == 0) {
-        ttime = 20
+        ttime = 30
         tdirection = direction
         tx = x
         ty = y
@@ -58,11 +61,11 @@ let x = 0
 let y = 0
 let direction = 0
 let speed = 0
-let tspeed = 2
+let tspeed = 1.7
 let ttime = 0
 init()
 basic.forever(function () {
-    control.waitMicros(1500000)
+    control.waitMicros(1000000)
     if (ttime > 0) {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
@@ -70,4 +73,8 @@ basic.forever(function () {
         radio.sendString("" + (`torpedo:${tx}:${ty}:${tdirection}:${ttime}`))
         tsound(tx, ty)
     }
+    speed = -input.acceleration(Dimension.Y)/1024
+    direction += input.acceleration(Dimension.X)/1024
+    x += speed * Math.cos(direction)
+    y += speed * Math.sin(direction)
 })
