@@ -1,5 +1,5 @@
 function tsound (fx: number, fy: number) {
-    music.setVolume(255 - Math.pow(distance(x, y, fx, fy), 2))
+    music.setVolume(255 - distance(x, y, fx, fy) ** 2)
     music.playTone(110, music.beat(BeatFraction.Whole))
 }
 function ping (freq: number, message: string) {
@@ -42,7 +42,7 @@ radio.onReceivedString(function (receivedString) {
         ping(1000, "pong")
     }
     if (messages[0] == "torpedo") {
-        tsound(+messages[1], +messages[2])
+        tsound(parseInt(messages[1], 10), parseInt(messages[2], 10))
     }
 })
 input.onButtonPressed(Button.B, function () {
@@ -53,16 +53,16 @@ input.onButtonPressed(Button.B, function () {
         ty = y
     }
 })
-let messages: string[] = []
-let ty = 0
-let tx = 0
-let tdirection = 0
-let x = 0
-let y = 0
-let direction = 0
-let speed = 0
-let tspeed = 1.7
 let ttime = 0
+let speed = 0
+let direction = 0
+let y = 0
+let x = 0
+let tdirection = 0
+let tx = 0
+let ty = 0
+let messages: string[] = []
+let tspeed = 1.7
 init()
 basic.forever(function () {
     control.waitMicros(500000)
@@ -74,8 +74,8 @@ basic.forever(function () {
         tsound(tx, ty)
     }
     control.waitMicros(500000)
-    speed = -input.acceleration(Dimension.Y)/1024
-    direction += input.acceleration(Dimension.X)/1024
+    speed = (0 - input.acceleration(Dimension.Y)) / 1024
+    direction += input.acceleration(Dimension.X) / 1024
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
     radio.sendString("" + (`move:${x}:${y}:${direction}:${speed}`))
