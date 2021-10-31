@@ -65,7 +65,7 @@ let tspeed = 1.7
 let ttime = 0
 init()
 basic.forever(function () {
-    control.waitMicros(1000000)
+    control.waitMicros(500000)
     if (ttime > 0) {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
@@ -73,8 +73,10 @@ basic.forever(function () {
         radio.sendString("" + (`torpedo:${tx}:${ty}:${tdirection}:${ttime}`))
         tsound(tx, ty)
     }
+    control.waitMicros(500000)
     speed = -input.acceleration(Dimension.Y)/1024
     direction += input.acceleration(Dimension.X)/1024
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
+    radio.sendString("" + (`move:${x}:${y}:${direction}:${speed}`))
 })
