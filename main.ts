@@ -1,5 +1,5 @@
 function tsound (fx: number, fy: number) {
-    music.setVolume(255 - distance(x, y, fx, fy) ** 2)
+    music.setVolume(255 - quieting(x, y, fx, fy))
     music.playTone(110, music.beat(BeatFraction.Whole))
 }
 function ping (freq: number, message: string) {
@@ -32,8 +32,8 @@ x = randint(0, 100)
     music.playTone(988, music.beat(BeatFraction.Sixteenth))
     draw()
 }
-function distance (x1: number, y1: number, x2: number, y2: number) {
-    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+function quieting (x1: number, y1: number, x2: number, y2: number) {
+    return (x1 - x2) ** 2 + (y1 - y2) ** 2
 }
 radio.onReceivedString(function (receivedString) {
     messages = receivedString.split(":")
@@ -72,11 +72,15 @@ basic.forever(function () {
         ty += tspeed * Math.sin(tdirection)
         radio.sendString("" + (`torpedo:${tx}:${ty}:${tdirection}:${ttime}`))
         tsound(tx, ty)
+    } else {
+        control.waitMicros(200000)
     }
     control.waitMicros(500000)
     speed = (0 - input.acceleration(Dimension.Y)) / 1024
     direction += input.acceleration(Dimension.X) / 1024
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
-    radio.sendString("" + (`move:${x}:${y}:${direction}:${speed}`))
+    if (speed > 0.5 || speed < -0.5) {
+        radio.sendString("" + (`move:${x}:${y}:${direction}:${speed}`))
+    }
 })
