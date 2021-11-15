@@ -12,6 +12,13 @@ function ping (freq: number, message: string) {
     music.playTone(freq, music.beat(BeatFraction.Half))
     return message
 }
+function relativeDirectionSpeed (d1: number, v1: number, x1: number, y1: number, d2: number, v2: number, x2: number, y2: number) {
+    let direction = 0
+    angle = Math.atan2(y2 - y1, x2 - x1)
+    ev1 = v1 * Math.cos(direction - d1)
+    ev2 = v2 * Math.cos(direction - d2)
+    return [angle, ev1 - ev2]
+}
 input.onButtonPressed(Button.A, function () {
     radio.sendString("" + (`ping:${x}:${y}:${direction2}:${speed}`))
 })
@@ -42,10 +49,6 @@ x = randint(0, 100)
     music.playTone(988, music.beat(BeatFraction.Sixteenth))
     draw()
 }
-function relativeSpeed (d1: number, v1: number, x1: number, y1: number, d2: number, v2: number, x2: number, y2: number) {
-    direction = Math.atan2(y2 - y1, x2 - x1)
-    return direction
-}
 radio.onReceivedString(function (receivedString) {
     messages = receivedString.split(":")
     if (messages[0] == "ping") {
@@ -62,6 +65,10 @@ asound = parseFloat(messages[3])
     if (messages[0] == "move") {
         sound(xsound, ysound, 110)
     }
+    let rdirection: number
+let rspeed: number
+[rdirection, rspeed] = relativeDirectionSpeed(direction2, speed, x, y, 0, 0, xsound, ysound)
+showDirection(rdirection)
 })
 input.onButtonPressed(Button.B, function () {
     if (ttime == 0) {
@@ -71,20 +78,35 @@ input.onButtonPressed(Button.B, function () {
         ty = y
     }
 })
+function showDirection (angle: number) {
+    for (let entry of directionals) {
+        if (angle > entry[0]) {
+            rx = entry[1]
+            ry = entry[2]
+        }
+    }
+    led.plot(rx, ry)
+    music.playTone(1000, music.beat(BeatFraction.Sixteenth))
+    led.unplot(rx, ry)
+}
+let ry = 0
+let rx = 0
 let ttime = 0
 let ssound = 0
 let asound = 0
-let direction = 0
+let ev2 = 0
+let ev1 = 0
+let angle = 0
 let directionals: number[][] = []
+let directions: number[] = []
+let messages: string[] = []
+let ty = 0
+let tx = 0
+let tdirection = 0
+let x = 0
+let y = 0
 let speed = 0
 let direction2 = 0
-let y = 0
-let x = 0
-let tdirection = 0
-let tx = 0
-let ty = 0
-let messages: string[] = []
-let directions: number[] = []
 let tspeed = 1.7
 let fpi = Math.PI / 36
 directionals = [
