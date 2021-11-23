@@ -12,12 +12,12 @@ function ping(freq: number, message: string) {
     music.playTone(freq, music.beat(BeatFraction.Half))
     return message
 }
-function relativeDirectionSpeed(d1: number, v1: number, x1: number, y1: number, d2: number, v2: number, x2: number, y2: number) {
+function relativeDirectionSpeed(v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
     let targetDirection = 0
     angle = Math.atan2(y2 - y1, x2 - x1)
     ev1 = v1 * Math.cos(targetDirection - d1)
     ev2 = v2 * Math.cos(targetDirection - d2)
-    return [angle, ev1 - ev2]
+    return [ev1 - ev2, angle]
 }
 input.onButtonPressed(Button.A, function () {
     radio.sendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
@@ -41,6 +41,9 @@ function initv2() {
     music.setBuiltInSpeakerEnabled(true)
     init()
 }
+function toFixed(n:number):number {
+    return Math.trunc(n*10) / 10.0
+}
 function init() {
     radio.setGroup(1)
     game.score()
@@ -52,22 +55,21 @@ function init() {
 radio.onReceivedString(function (receivedString) {
     messages = receivedString.split(":")
     if (messages[0] == "p") {
-        control.waitMicros(1000 * randint(0, 1000))
         ping(1000, "g")
     }
     let xsound = parseFloat(messages[1])
     let ysound = parseFloat(messages[2])
     ssound = parseFloat(messages[3])
     asound = parseFloat(messages[4])
-    if (messages[0] == "torpedo") {
+    if (messages[0] == "t") {
         sound(xsound, ysound, 160)
     }
-    if (messages[0] == "move") {
+    if (messages[0] == "m") {
         sound(xsound, ysound, 110)
     }
     let rdirection: number
     let rspeed: number
-    [rdirection, rspeed] = relativeDirectionSpeed(direction, speed, x, y, 0, 0, xsound, ysound)
+    [rspeed, rdirection] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
     showDirection(rdirection)
 })
 input.onButtonPressed(Button.B, function () {
@@ -79,17 +81,18 @@ input.onButtonPressed(Button.B, function () {
     }
 })
 function showDirection(angle: number) {
-    rx = 2
-    ry = 1
-    for (let entry of directionals) {
-        if (angle > entry[0]) {
-            rx = entry[1]
-            ry = entry[2]
-        }
-    }
+    [rx, ry] = directionTo(angle)
     led.plot(rx, ry)
     music.playTone(1000, music.beat(BeatFraction.Sixteenth))
     led.unplot(rx, ry)
+}
+function directionTo(angle: number) {
+    for (let entry of directionals) {
+        if (angle > entry[0]) {
+            return [entry[1], entry[2]]
+        }
+    }
+    return [2, 1]
 }
 let ry = 0
 let rx = 0
@@ -137,13 +140,13 @@ basic.forever(function () {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
         ty += tspeed * Math.sin(tdirection)
-        radio.sendString("" + (`torpedo:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
+        radio.sendString("" + (`t:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
         sound(tx, ty, 160)
     } else {
         control.waitMicros(200000)
     }
     control.waitMicros(500000)
-    speed = (0 - input.acceleration(Dimension.Y)) / 1024
+    speed = (0 - input.acceleration(Dimension.Y)) / 256.0
     direction += input.acceleration(Dimension.X) / 1024
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
