@@ -20,7 +20,7 @@ function relativeDirectionSpeed(d1: number, v1: number, x1: number, y1: number, 
     return [angle, ev1 - ev2]
 }
 input.onButtonPressed(Button.A, function () {
-    radio.sendString("" + (`ping:${Math.round(x)}:${Math.round(y)}:${direction}:${Math.round(speed)}`))
+    radio.sendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
 })
 function coordinates(d: number) {
     for (let coordinate of directionals) {
@@ -51,14 +51,14 @@ function init() {
 }
 radio.onReceivedString(function (receivedString) {
     messages = receivedString.split(":")
-    if (messages[0] == "ping") {
+    if (messages[0] == "p") {
         control.waitMicros(1000 * randint(0, 1000))
-        ping(1000, "pong")
+        ping(1000, "g")
     }
     let xsound = parseFloat(messages[1])
     let ysound = parseFloat(messages[2])
-    asound = parseFloat(messages[3])
-    ssound = parseFloat(messages[4])
+    ssound = parseFloat(messages[3])
+    asound = parseFloat(messages[4])
     if (messages[0] == "torpedo") {
         sound(xsound, ysound, 160)
     }
@@ -137,7 +137,7 @@ basic.forever(function () {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
         ty += tspeed * Math.sin(tdirection)
-        radio.sendString("" + (`torpedo:${Math.round(tx)}:${Math.round(ty)}:${tdirection}:${Math.round(tspeed)}`))
+        radio.sendString("" + (`torpedo:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
         sound(tx, ty, 160)
     } else {
         control.waitMicros(200000)
@@ -148,6 +148,6 @@ basic.forever(function () {
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
     if (speed > 0.5 || speed < -0.5) {
-        radio.sendString("" + (`move:${Math.round(x)}:${Math.round(y)}:${direction}:${Math.round(speed)}`))
+        radio.sendString("" + (`m:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
     }
 })
