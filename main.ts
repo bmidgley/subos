@@ -47,12 +47,13 @@ function toFixed(n:number):number {
 function init() {
     radio.setGroup(1)
     game.score()
-    x = randint(0, 100)
-    y = randint(0, 100)
+    x = randint(0, 20)
+    y = randint(0, 20)
     music.playTone(988, music.beat(BeatFraction.Sixteenth))
     draw()
 }
 radio.onReceivedString(function (receivedString) {
+    serial.writeString(receivedString + "\n")
     messages = receivedString.split(":")
     if (messages[0] == "p") {
         ping(1000, "g")
@@ -147,7 +148,7 @@ basic.forever(function () {
     }
     control.waitMicros(500000)
     speed = (0 - input.acceleration(Dimension.Y)) / 256.0
-    direction += input.acceleration(Dimension.X) / 1024
+    direction += input.acceleration(Dimension.X) / 10240
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
     if (speed > 0.5 || speed < -0.5) {
