@@ -53,7 +53,7 @@ function init() {
     draw()
 }
 radio.onReceivedString(function (receivedString) {
-    serial.writeString(receivedString + "\n")
+    serial.writeString(`inbound: ${receivedString}\n`)
     messages = receivedString.split(":")
     if (messages[0] == "p") {
         ping(1000, "g")
@@ -94,6 +94,10 @@ function directionTo(angle: number) {
         }
     }
     return [2, 1]
+}
+function debugSendString(message: string) {
+    serial.writeString(`outbound: ${message}\n`)
+    radio.sendString(message)
 }
 let ry = 0
 let rx = 0
@@ -141,7 +145,7 @@ basic.forever(function () {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
         ty += tspeed * Math.sin(tdirection)
-        radio.sendString("" + (`t:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
+        debugSendString("" + (`t:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
         sound(tx, ty, 160)
     } else {
         control.waitMicros(200000)
@@ -152,6 +156,6 @@ basic.forever(function () {
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
     if (speed > 0.5 || speed < -0.5) {
-        radio.sendString("" + (`m:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+        debugSendString("" + (`m:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
     }
 })
