@@ -31,7 +31,7 @@ function directionTo (angle: number) {
     return [2, 1]
 }
 input.onButtonPressed(Button.A, function () {
-    radio.sendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
 })
 function coordinates (d: number) {
     for (let coordinate of directionals) {
@@ -49,10 +49,6 @@ function sound (fx: number, fy: number, freq: number) {
     music.setVolume(255 - quieting(x, y, fx, fy))
     music.playTone(freq, music.beat(BeatFraction.Whole))
 }
-function initv2 () {
-    music.setBuiltInSpeakerEnabled(true)
-    init()
-}
 function debugSendString (message: string) {
     serial.writeString("" + (`outbound: ${message}\n`))
     //radio.sendString(message)
@@ -60,17 +56,17 @@ function debugSendString (message: string) {
 function init () {
     radio.setGroup(1)
     game.score()
-x = randint(0, gridsize)
+    x = randint(0, gridsize)
     y = randint(0, gridsize)
     for (let index = 0; index < 3; index++) {
         mines.push([randint(0, gridsize), randint(0, gridsize)])
     }
+    music.playTone(788, music.beat(BeatFraction.Sixteenth))
+    // return
+    //direction = -pi/2
     x=2
     y=3
-    mines[0] = [2, 2]
-    mines[1] = [3, 2]
-    mines[3] = [4, 2]
-    music.playTone(788, music.beat(BeatFraction.Sixteenth))
+    mines = [[4,3]]
 }
 radio.onReceivedString(function (receivedString) {
     serial.writeString("" + (`inbound: ${receivedString}\n`))
@@ -93,9 +89,9 @@ radio.onReceivedString(function (receivedString) {
         return
     }
     let rdirection: number
-let rspeed: number
-[rspeed, rdirection] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
-showDirection(rdirection)
+    let rspeed: number
+    [rspeed, rdirection] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
+    showDirection(rdirection)
 })
 input.onButtonPressed(Button.B, function () {
     if (ttime == 0) {
@@ -107,20 +103,19 @@ input.onButtonPressed(Button.B, function () {
 })
 function showDirection (angle: number) {
     [rx, ry] = directionTo(angle)
-led.plot(rx, ry)
+    led.plot(rx, ry)
     music.playTone(1000, music.beat(BeatFraction.Sixteenth))
     led.unplot(rx, ry)
 }
 function plotMine(mine: number[]) {
     let dx = mine[0] - x
     let dy = mine[1] - y
-    let px = Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
-    let py = Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
-    serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
-    led.plot(px, py)
+    let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
+    let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
+    //serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
+    led.plot(px, py) // 1, 2
 }
 function broadcastMine(mine: number[]) {
-    debugSendString("" + (`m:${mine[0]}:${mine[1]}:0:0`))
     plotMine(mine)
 }
 let ttime = 0
@@ -145,6 +140,8 @@ let mines: number[][] = []
 let xsound = 0
 let ysound = 0
 let tspeed = 1.7
+let twopi = Math.PI * 2
+let pi = Math.PI
 let fpi = Math.PI / 36
 gridsize = 5
 directionals = [
@@ -179,17 +176,20 @@ basic.forever(function () {
         control.waitMicros(200000)
     }
     control.waitMicros(500000)
-    speed = (0 - input.acceleration(Dimension.Y)) / 256
-    direction -= input.acceleration(Dimension.X) / 10240
+    speed = - input.acceleration(Dimension.Y) / 2048
+    direction -= input.acceleration(Dimension.X) / 4096
+    if(direction > pi)
+        direction -= twopi
+    if (direction < -pi)
+        direction += twopi
     x += speed * Math.cos(direction)
     y += speed * Math.sin(direction)
     if(x < 0) x = 0;
     if(y < 0) y = 0;
     if(x > gridsize) x = gridsize;
     if(y > gridsize) y = gridsize;
-    if (speed > 0.5 || speed < -0.5) {
-        debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
-    }
+    debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    
     draw()
     mines.forEach(mine => broadcastMine(mine))
 })
