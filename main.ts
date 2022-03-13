@@ -9,20 +9,12 @@ function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number,
     angle = Math.atan2(y2 - y1, x2 - x1)
     ev1 = v1 * Math.cos(targetDirection - d1)
     ev2 = v2 * Math.cos(targetDirection - d2)
-    return [ev1 - ev2, angle]
+    return [angle, ev1 - ev2]
 }
 function directionTo (angle: number) {
     for (let entry of directionals) {
         if (angle > entry[0]) {
             return [entry[1], entry[2]]
-        }
-    }
-    return [2, 1]
-}
-function coordinates (d: number) {
-    for (let coordinate of directionals) {
-        if (d > coordinate[0]) {
-            return coordinate[1]
         }
     }
     return [2, 1]
@@ -41,16 +33,13 @@ function debugSendString (message: string) {
 }
 function init () {
     radio.setGroup(1)
-    game.score()
-x = randint(0, gridsize)
+    x = randint(0, gridsize)
     y = randint(0, gridsize)
     for (let index = 0; index < 3; index++) {
         mines.push([randint(0, gridsize), randint(0, gridsize)])
     }
     music.playTone(788, music.beat(BeatFraction.Sixteenth))
-    x = 2
-    y = 3
-    mines = [[4, 3]]
+    //mines = [[4, 3]]
 }
 radio.onReceivedString(function (receivedString) {
     serial.writeString("" + (`inbound: ${receivedString}\n`))
@@ -77,7 +66,7 @@ return
     }
     let rdirection: number
 let rspeed: number
-[rspeed, rdirection] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
+    [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
 showDirection(rdirection)
 })
 input.onButtonPressed(Button.A, function () {
