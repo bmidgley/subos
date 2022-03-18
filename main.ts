@@ -19,31 +19,46 @@ function directionTo (angle: number) {
     }
     return [2, 1]
 }
+function sound(fx: number, fy: number, freq: number) {
+    music.setVolume(255 - quieting(x, y, fx, fy))
+    music.playTone(freq, music.beat(BeatFraction.Whole))
+}
+function showDirection(xsound: number, ysound: number, angle: number, obj: string) {
+    [rx, ry] = directionTo(angle)
+    serial.writeString(control.deviceSerialNumber() + (` plot ${rx},${ry} for direction ${angle}\n`))
+    led.plot(rx, ry)
+    if (obj == "t") {
+        sound(xsound, ysound, 160)
+    }
+    if (obj == "s") {
+        sound(xsound, ysound, 110)
+    }
+    if (obj == "p") {
+        sound(xsound, ysound, 1000)
+    }
+    if(obj == "g") {
+        sound(xsound, ysound, 1100)
+    }
+    led.unplot(rx, ry)
+}
+function console_spacing () {
+    return 8 * (control.deviceSerialNumber() % 8)
+}
 function draw () {
     basic.clearScreen()
     led.plot(2, 3)
 }
-function sound (fx: number, fy: number, freq: number) {
-    music.setVolume(255 - quieting(x, y, fx, fy))
-    music.playTone(freq, music.beat(BeatFraction.Whole))
+function debugMessage(message: string, direction: string) {
+    if (message[0] != "s" && direction != "received:")
+        serial.writeString("" + control.deviceSerialNumber() + (` ${direction} ${message}\n`))
 }
 function debugSendString (message: string) {
-    serial.writeString("" + (`outbound: ${message}\n`))
+    debugMessage(message, "is sending:")
     radio.sendString(message)
 }
-function init () {
-    radio.setGroup(1)
-    x = randint(0, gridsize)
-    y = randint(0, gridsize)
-    for (let index = 0; index < 3; index++) {
-        mines.push([randint(0, gridsize), randint(0, gridsize)])
-    }
-    music.playTone(788, music.beat(BeatFraction.Sixteenth))
-    //mines = [[4, 3]]
-}
-radio.onReceivedString(function (receivedString) {
-    serial.writeString("" + (`inbound: ${receivedString}\n`))
-    messages = receivedString.split(":")
+radio.onReceivedString(function (message) {
+    debugMessage(message, "received:")
+    messages = message.split(":")
     if (messages[0] == "p") {
         music.rest(music.beat(BeatFraction.Sixteenth))
         music.setVolume(128)
@@ -54,23 +69,26 @@ radio.onReceivedString(function (receivedString) {
     ysound = parseFloat(messages[2])
     ssound = parseFloat(messages[3])
     asound = parseFloat(messages[4])
-    if (messages[0] == "t") {
-        sound(xsound, ysound, 160)
-    }
-    if (messages[0] == "s") {
-        //sound(xsound, ysound, 110)
-    }
     if (messages[0] == "m") {
         plotMine([xsound, ysound])
 return
     }
     let rdirection: number
 let rspeed: number
-    [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
-showDirection(rdirection)
+[rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
+showDirection(xsound, ysound, rdirection, messages[0])
 })
+function init() {
+    radio.setGroup(1)
+    x = randint(0, gridsize)
+    y = randint(0, gridsize)
+    for (let index = 0; index < 3; index++) {
+        mines.push([randint(0, gridsize), randint(0, gridsize)])
+    }
+    music.playTone(788, music.beat(BeatFraction.Sixteenth))
+}
 input.onButtonPressed(Button.A, function () {
-    debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))    
+    debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
     music.setVolume(255)
     music.playTone(1000, music.beat(BeatFraction.Half))
 })
@@ -82,33 +100,27 @@ input.onButtonPressed(Button.B, function () {
         ty = y
     }
 })
-function showDirection (angle: number) {
-    [rx, ry] = directionTo(angle)
-led.plot(rx, ry)
-    //music.playTone(1000, music.beat(BeatFraction.Sixteenth))
-    led.unplot(rx, ry)
-}
 let ttime = 0
 let messages: string[] = []
 let ev2 = 0
 let ev1 = 0
 let directionals: number[][] = []
 let gridsize = 0
-let ysound = 0
-let xsound = 0
-let mines: number[][] = []
-let direction = 0
-let speed = 0
-let y = 0
-let x = 0
-let tdirection = 0
-let tx = 0
-let ty = 0
-let angle = 0
-let asound = 0
-let ssound = 0
-let rx = 0
 let ry = 0
+let rx = 0
+let ssound = 0
+let asound = 0
+let angle = 0
+let ty = 0
+let tx = 0
+let tdirection = 0
+let x = 0
+let y = 0
+let speed = 0
+let direction = 0
+let mines: number[][] = []
+let xsound = 0
+let ysound = 0
 function plotMine(mine: number[]) {
     let dx = mine[0] - x
     let dy = mine[1] - y
@@ -179,7 +191,7 @@ basic.forever(function () {
     if (y > gridsize) {
         y = gridsize
     }
-    debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    if(speed > 4) debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
     draw()
     mines.forEach(mine => broadcastMine(mine))
 })
