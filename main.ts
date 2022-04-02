@@ -9,9 +9,11 @@ function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number,
     angle = Math.atan2(y2 - y1, x2 - x1)
     ev1 = v1 * Math.cos(targetDirection - d1)
     ev2 = v2 * Math.cos(targetDirection - d2)
-    return [angle, ev1 - ev2]
+    return [angle - d1, ev1 - ev2]
 }
 function directionTo (angle: number) {
+    while(angle > pi) angle -= twopi
+    while(angle < -pi) angle += twopi
     for (let entry of directionals) {
         if (angle > entry[0]) {
             return [entry[1], entry[2]]
