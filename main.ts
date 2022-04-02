@@ -78,6 +78,17 @@ let rspeed: number
 [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
 showDirection(xsound, ysound, rdirection, messages[0])
 })
+function plotMine(mine: number[]) {
+    let dx = mine[0] - x
+    let dy = mine[1] - y
+    let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
+    let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
+    //serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
+    led.plot(px, py) // 1, 2
+}
+function broadcastMine(mine: number[]) {
+    plotMine(mine)
+}
 function init() {
     radio.setGroup(1)
     x = randint(0, gridsize)
@@ -86,6 +97,26 @@ function init() {
         mines.push([randint(0, gridsize), randint(0, gridsize)])
     }
     music.playTone(788, music.beat(BeatFraction.Sixteenth))
+    for (let i = 0; i < gridsize; i++) { grid.push([]) }
+    directionals = [
+        [fpi * 33, 0, 3],
+        [fpi * 29, 0, 2],
+        [fpi * 26, 0, 1],
+        [fpi * 23, 0, 0],
+        [fpi * 20, 1, 0],
+        [fpi * 16, 2, 0],
+        [fpi * 13, 3, 0],
+        [fpi * 10, 4, 0],
+        [fpi * 7, 4, 1],
+        [fpi * 3, 4, 2],
+        [fpi * -3, 4, 3],
+        [fpi * -7, 4, 4],
+        [fpi * -13, 3, 4],
+        [fpi * -23, 2, 4],
+        [fpi * -29, 1, 4],
+        [fpi * -33, 0, 4],
+        [fpi * -37, 0, 3]
+    ]
 }
 input.onButtonPressed(Button.A, function () {
     debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
@@ -105,7 +136,7 @@ let messages: string[] = []
 let ev2 = 0
 let ev1 = 0
 let directionals: number[][] = []
-let gridsize = 0
+let gridsize = 50
 let ry = 0
 let rx = 0
 let ssound = 0
@@ -121,44 +152,15 @@ let direction = 0
 let mines: number[][] = []
 let xsound = 0
 let ysound = 0
-function plotMine(mine: number[]) {
-    let dx = mine[0] - x
-    let dy = mine[1] - y
-    let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
-    let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
-    //serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
-    led.plot(px, py) // 1, 2
-}
-function broadcastMine(mine: number[]) {
-    plotMine(mine)
-}
 let tspeed = 1.7
 let twopi = Math.PI * 2
 let pi = Math.PI
 let fpi = Math.PI / 36
-gridsize = 50
-directionals = [
-[fpi * 33, 0, 3],
-[fpi * 29, 0, 2],
-[fpi * 26, 0, 1],
-[fpi * 23, 0, 0],
-[fpi * 20, 1, 0],
-[fpi * 16, 2, 0],
-[fpi * 13, 3, 0],
-[fpi * 10, 4, 0],
-[fpi * 7, 4, 1],
-[fpi * 3, 4, 2],
-[fpi * -3, 4, 3],
-[fpi * -7, 4, 4],
-[fpi * -13, 3, 4],
-[fpi * -23, 2, 4],
-[fpi * -29, 1, 4],
-[fpi * -33, 0, 4],
-[fpi * -37, 0, 3]
-]
+let grid: number[][] = []
 init()
 basic.forever(function () {
     control.waitMicros(500000)
+    mines.forEach(mine => broadcastMine(mine))
     if (ttime > 0) {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
@@ -168,30 +170,10 @@ basic.forever(function () {
     } else {
         control.waitMicros(200000)
     }
-    control.waitMicros(500000)
     speed = (0 - input.acceleration(Dimension.Y)) / 128
     direction += 0 - input.acceleration(Dimension.X) / 4096
-    if (direction > pi) {
-        direction += 0 - twopi
-    }
-    if (direction < 0 - pi) {
-        direction += twopi
-    }
     x += speed * Math.cos(direction) / 16
     y += speed * Math.sin(direction) / 16
-    if (x < 0) {
-        x = 0
-    }
-    if (y < 0) {
-        y = 0
-    }
-    if (x > gridsize) {
-        x = gridsize
-    }
-    if (y > gridsize) {
-        y = gridsize
-    }
-    if(speed > 4) debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    if (speed > 4) debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
     draw()
-    mines.forEach(mine => broadcastMine(mine))
 })
