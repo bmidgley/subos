@@ -3,9 +3,9 @@ function quieting (x1: number, y1: number, x2: number, y2: number) {
 }
 function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
     let targetDirection = 0
-    angle = Math.atan2(y2 - y1, x2 - x1)
-    ev1 = v1 * Math.cos(targetDirection - d1)
-    ev2 = v2 * Math.cos(targetDirection - d2)
+    let angle = Math.atan2(y2 - y1, x2 - x1)
+    let ev1 = v1 * Math.cos(targetDirection - d1)
+    let ev2 = v2 * Math.cos(targetDirection - d2)
     return [angle - d1, ev1 - ev2]
 }
 function directionTo (angle: number) {
@@ -42,6 +42,8 @@ function sound(fx: number, fy: number, freq: number) {
     music.playTone(freq, music.beat(BeatFraction.Whole))
 }
 function showDirection(xsound: number, ysound: number, angle: number, obj: string) {
+    let ry:number
+    let rx:number
     [rx, ry] = directionTo(angle)
     serial.writeString(control.deviceSerialNumber() + (` plot ${rx},${ry} for direction ${angle}\n`))
     led.plot(rx, ry)
@@ -67,7 +69,8 @@ function debugMessage(message: string, direction: string) {
     if (message[0] != "s")
         serial.writeString("" + control.deviceSerialNumber() + (` ${direction} ${message}\n`))
 }
-function debugSendString (message: string) {
+function debugSendString (obj: string, x: number, y: number, speed: number, direction: number) {
+    let message = `${obj}:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`
     debugMessage(message, "is sending:")
     radio.sendString(message)
 }
@@ -76,11 +79,11 @@ function plotMine(mine: number[]) {
     let dy = mine[1] - y
     let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
     let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
-    //serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
     led.plot(px, py)
 }
 function broadcastMine(mine: number[]) {
     plotMine(mine)
+    debugSendString("m", mine[0], mine[1], 0, 0)
 }
 function init() {
     radio.setGroup(1)
@@ -93,7 +96,7 @@ function init() {
     for (let i = 0; i < gridsize; i++) { grid.push([]) }
 }
 input.onButtonPressed(Button.A, function () {
-    debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    debugSendString("p", x, y, speed, direction)
     music.setVolume(255)
     music.playTone(1000, music.beat(BeatFraction.Half))
 })
@@ -106,12 +109,16 @@ input.onButtonPressed(Button.B, function () {
     }
 })
 radio.onReceivedString(function (message) {
-    messages = message.split(":")
+    let ssound
+    let asound
+    let xsound
+    let ysound
+    let messages = message.split(":")
     if (messages[0] == "p") {
         music.rest(music.beat(BeatFraction.Sixteenth))
         music.setVolume(128)
         music.playTone(1100, music.beat(BeatFraction.Half))
-        debugSendString("" + (`g:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+        debugSendString("g", x, y, speed, direction)
     }
     xsound = parseFloat(messages[1])
     ysound = parseFloat(messages[2])
@@ -126,31 +133,21 @@ radio.onReceivedString(function (message) {
     [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
     showDirection(xsound, ysound, rdirection, messages[0])
 })
-let ttime = 0
-let messages: string[] = []
-let ev2 = 0
-let ev1 = 0
 let gridsize = 50
-let ry = 0
-let rx = 0
-let ssound = 0
-let asound = 0
-let angle = 0
-let ty = 0
-let tx = 0
-let tdirection = 0
+let ttime = 0
+let tx :number
+let ty :number
+let tspeed = 1.7
+let tdirection :number
 let x = 0
 let y = 0
 let speed = 0
 let direction = 0
-let mines: number[][] = []
-let xsound = 0
-let ysound = 0
-let tspeed = 1.7
 let twopi = Math.PI * 2
 let pi = Math.PI
 let fpi = Math.PI / 36
 let grid: number[][] = []
+let mines: number[][] = []
 init()
 basic.forever(function () {
     control.waitMicros(500000)
@@ -159,7 +156,7 @@ basic.forever(function () {
         ttime += 0 - 1
         tx += tspeed * Math.cos(tdirection)
         ty += tspeed * Math.sin(tdirection)
-        debugSendString("" + (`t:${Math.round(tx)}:${Math.round(ty)}:${Math.round(tspeed)}:${tdirection}`))
+        debugSendString("t", tx, ty, tspeed, tdirection)
         sound(tx, ty, 160)
     } else {
         control.waitMicros(200000)
@@ -168,6 +165,7 @@ basic.forever(function () {
     direction += 0 - input.acceleration(Dimension.X) / 4096
     x += speed * Math.cos(direction) / 16
     y += speed * Math.sin(direction) / 16
-    if (speed > 4) debugSendString("" + (`s:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    if (speed > 4)
+        debugSendString("s", x, y, speed, direction)
     draw()
 })
