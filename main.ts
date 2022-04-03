@@ -1,9 +1,6 @@
 function quieting (x1: number, y1: number, x2: number, y2: number) {
     return (x1 - x2) ** 2 + (y1 - y2) ** 2
 }
-function toFixed (n: number) {
-    return Math.trunc(n * 10) / 10
-}
 function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
     let targetDirection = 0
     angle = Math.atan2(y2 - y1, x2 - x1)
@@ -12,6 +9,25 @@ function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number,
     return [angle - d1, ev1 - ev2]
 }
 function directionTo (angle: number) {
+    let directionals = [
+        [fpi * 33, 0, 3],
+        [fpi * 29, 0, 2],
+        [fpi * 26, 0, 1],
+        [fpi * 23, 0, 0],
+        [fpi * 20, 1, 0],
+        [fpi * 16, 2, 0],
+        [fpi * 13, 3, 0],
+        [fpi * 10, 4, 0],
+        [fpi * 7, 4, 1],
+        [fpi * 3, 4, 2],
+        [fpi * -3, 4, 3],
+        [fpi * -7, 4, 4],
+        [fpi * -13, 3, 4],
+        [fpi * -23, 2, 4],
+        [fpi * -29, 1, 4],
+        [fpi * -33, 0, 4],
+        [fpi * -37, 0, 3]
+    ]
     while(angle > pi) angle -= twopi
     while(angle < -pi) angle += twopi
     for (let entry of directionals) {
@@ -43,50 +59,25 @@ function showDirection(xsound: number, ysound: number, angle: number, obj: strin
     }
     led.unplot(rx, ry)
 }
-function console_spacing () {
-    return 8 * (control.deviceSerialNumber() % 8)
-}
 function draw () {
     basic.clearScreen()
     led.plot(2, 3)
 }
 function debugMessage(message: string, direction: string) {
-    if (message[0] != "s" && direction != "received:")
+    if (message[0] != "s")
         serial.writeString("" + control.deviceSerialNumber() + (` ${direction} ${message}\n`))
 }
 function debugSendString (message: string) {
     debugMessage(message, "is sending:")
     radio.sendString(message)
 }
-radio.onReceivedString(function (message) {
-    debugMessage(message, "received:")
-    messages = message.split(":")
-    if (messages[0] == "p") {
-        music.rest(music.beat(BeatFraction.Sixteenth))
-        music.setVolume(128)
-        music.playTone(1100, music.beat(BeatFraction.Half))
-        debugSendString("" + (`g:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
-    }
-    xsound = parseFloat(messages[1])
-    ysound = parseFloat(messages[2])
-    ssound = parseFloat(messages[3])
-    asound = parseFloat(messages[4])
-    if (messages[0] == "m") {
-        plotMine([xsound, ysound])
-return
-    }
-    let rdirection: number
-let rspeed: number
-[rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
-showDirection(xsound, ysound, rdirection, messages[0])
-})
 function plotMine(mine: number[]) {
     let dx = mine[0] - x
     let dy = mine[1] - y
     let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
     let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
     //serial.writeString("" + (`plot: ${Math.round(x)},${Math.round(y)}@${direction}: ${mine[0]},${mine[1]} -> ${px},${py}\n`))
-    led.plot(px, py) // 1, 2
+    led.plot(px, py)
 }
 function broadcastMine(mine: number[]) {
     plotMine(mine)
@@ -100,25 +91,6 @@ function init() {
     }
     music.playTone(788, music.beat(BeatFraction.Sixteenth))
     for (let i = 0; i < gridsize; i++) { grid.push([]) }
-    directionals = [
-        [fpi * 33, 0, 3],
-        [fpi * 29, 0, 2],
-        [fpi * 26, 0, 1],
-        [fpi * 23, 0, 0],
-        [fpi * 20, 1, 0],
-        [fpi * 16, 2, 0],
-        [fpi * 13, 3, 0],
-        [fpi * 10, 4, 0],
-        [fpi * 7, 4, 1],
-        [fpi * 3, 4, 2],
-        [fpi * -3, 4, 3],
-        [fpi * -7, 4, 4],
-        [fpi * -13, 3, 4],
-        [fpi * -23, 2, 4],
-        [fpi * -29, 1, 4],
-        [fpi * -33, 0, 4],
-        [fpi * -37, 0, 3]
-    ]
 }
 input.onButtonPressed(Button.A, function () {
     debugSendString("" + (`p:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
@@ -133,11 +105,31 @@ input.onButtonPressed(Button.B, function () {
         ty = y
     }
 })
+radio.onReceivedString(function (message) {
+    messages = message.split(":")
+    if (messages[0] == "p") {
+        music.rest(music.beat(BeatFraction.Sixteenth))
+        music.setVolume(128)
+        music.playTone(1100, music.beat(BeatFraction.Half))
+        debugSendString("" + (`g:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`))
+    }
+    xsound = parseFloat(messages[1])
+    ysound = parseFloat(messages[2])
+    ssound = parseFloat(messages[3])
+    asound = parseFloat(messages[4])
+    if (messages[0] == "m") {
+        plotMine([xsound, ysound])
+        return
+    }
+    let rdirection: number
+    let rspeed: number
+    [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
+    showDirection(xsound, ysound, rdirection, messages[0])
+})
 let ttime = 0
 let messages: string[] = []
 let ev2 = 0
 let ev1 = 0
-let directionals: number[][] = []
 let gridsize = 50
 let ry = 0
 let rx = 0
