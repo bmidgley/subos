@@ -2,11 +2,10 @@ function quieting (x1: number, y1: number, x2: number, y2: number) {
     return (x1 - x2) ** 2 + (y1 - y2) ** 2
 }
 function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
-    let targetDirection = 0
-    let angle = Math.atan2(y2 - y1, x2 - x1)
+    let targetDirection = Math.atan2(y2 - y1, x2 - x1)
     let ev1 = v1 * Math.cos(targetDirection - d1)
     let ev2 = v2 * Math.cos(targetDirection - d2)
-    return [angle - d1, ev1 - ev2]
+    return [targetDirection - d1, ev1 - ev2]
 }
 function directionTo (angle: number) {
     let directionals = [
