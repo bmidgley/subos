@@ -84,16 +84,6 @@ function broadcastMine(mine: number[]) {
     plotMine(mine)
     debugSendString("m", mine[0], mine[1], 0, 0)
 }
-function init() {
-    radio.setGroup(1)
-    x = randint(0, gridsize)
-    y = randint(0, gridsize)
-    for (let index = 0; index < 3; index++) {
-        mines.push([randint(0, gridsize), randint(0, gridsize)])
-    }
-    music.playTone(788, music.beat(BeatFraction.Sixteenth))
-    for (let i = 0; i < gridsize; i++) { grid.push([]) }
-}
 input.onButtonPressed(Button.A, function () {
     debugSendString("p", x, y, speed, direction)
     music.setVolume(255)
@@ -132,21 +122,36 @@ radio.onReceivedString(function (message) {
     [rdirection, rspeed] = relativeDirectionSpeed(speed, direction, x, y, ssound, asound, xsound, ysound)
     showDirection(xsound, ysound, rdirection, messages[0])
 })
+function init() {
+    radio.setGroup(1)
+    for (let i = 0; i < gridsize; i++) { grid.push([]) }
+
+    x = randint(0, gridsize)
+    y = randint(0, gridsize)
+    direction = 0
+
+    tspeed = 1.7
+    for (let index = 0; index < 3; index++) {
+        mines.push([randint(0, gridsize), randint(0, gridsize)])
+    }
+
+    music.playTone(788, music.beat(BeatFraction.Sixteenth))
+}
 let gridsize = 50
-let ttime = 0
-let tx :number
-let ty :number
-let tspeed = 1.7
-let tdirection :number
-let x = 0
-let y = 0
-let speed = 0
-let direction = 0
-let twopi = Math.PI * 2
 let pi = Math.PI
-let fpi = Math.PI / 36
+let twopi = pi * 2
+let fpi = pi / 36
+let ttime = 0
 let grid: number[][] = []
 let mines: number[][] = []
+let x: number
+let y: number
+let direction: number
+let speed: number
+let tx :number
+let ty :number
+let tdirection: number
+let tspeed :number
 init()
 basic.forever(function () {
     control.waitMicros(500000)
