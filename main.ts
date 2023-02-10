@@ -55,7 +55,7 @@ function showDirection(xsound: number, ysound: number, angle: number, obj: strin
     if (obj == "p") {
         sound(xsound, ysound, 1000)
     }
-    if(obj == "g") {
+    if (obj == "g") {
         sound(xsound, ysound, 1100)
     }
     led.unplot(rx, ry)
@@ -123,35 +123,36 @@ radio.onReceivedString(function (message) {
     showDirection(xsound, ysound, rdirection, messages[0])
 })
 function init() {
+    gridsize = 50
+    tspeed = 1.7
+    direction = 0
     radio.setGroup(1)
     for (let i = 0; i < gridsize; i++) { grid.push([]) }
 
     x = randint(0, gridsize)
     y = randint(0, gridsize)
-    direction = 0
 
-    tspeed = 1.7
     for (let index = 0; index < 3; index++) {
         mines.push([randint(0, gridsize), randint(0, gridsize)])
     }
 
     music.playTone(788, music.beat(BeatFraction.Sixteenth))
 }
-let gridsize = 50
 let pi = Math.PI
 let twopi = pi * 2
 let fpi = pi / 36
 let ttime = 0
 let grid: number[][] = []
 let mines: number[][] = []
+let gridsize: number
 let x: number
 let y: number
 let direction: number
 let speed: number
-let tx :number
-let ty :number
+let tx: number
+let ty: number
 let tdirection: number
-let tspeed :number
+let tspeed: number
 init()
 basic.forever(function () {
     control.waitMicros(500000)
