@@ -77,7 +77,7 @@ function plotMine(mine: number[]) {
     let dx = mine[0] - x
     let dy = mine[1] - y
     let px = 2 + Math.round(dx * Math.sin(direction) + dy * Math.cos(direction))
-    let py = 3 - Math.round(dx * Math.cos(direction) + dy * Math.sin(direction))
+    let py = 3 - Math.round(dx * Math.cos(direction) - dy * Math.sin(direction))
     led.plot(px, py)
 }
 function broadcastMine(mine: number[]) {
