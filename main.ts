@@ -1,13 +1,13 @@
-function quieting (x1: number, y1: number, x2: number, y2: number) {
+function quieting(x1: number, y1: number, x2: number, y2: number) {
     return (x1 - x2) ** 2 + (y1 - y2) ** 2
 }
-function relativeDirectionSpeed (v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
+function relativeDirectionSpeed(v1: number, d1: number, x1: number, y1: number, v2: number, d2: number, x2: number, y2: number) {
     let targetDirection = Math.atan2(y2 - y1, x2 - x1)
     let ev1 = v1 * Math.cos(targetDirection - d1)
     let ev2 = v2 * Math.cos(targetDirection - d2)
     return [targetDirection - d1, ev1 - ev2]
 }
-function directionTo (angle: number) {
+function directionTo(angle: number) {
     let directionals = [
         [fpi * 33, 0, 3],
         [fpi * 29, 0, 2],
@@ -27,8 +27,8 @@ function directionTo (angle: number) {
         [fpi * -33, 0, 4],
         [fpi * -37, 0, 3]
     ]
-    while(angle > pi) angle -= twopi
-    while(angle < -pi) angle += twopi
+    while (angle > pi) angle -= twopi
+    while (angle < -pi) angle += twopi
     for (let entry of directionals) {
         if (angle > entry[0]) {
             return [entry[1], entry[2]]
@@ -41,8 +41,8 @@ function sound(fx: number, fy: number, freq: number) {
     music.playTone(freq, music.beat(BeatFraction.Whole))
 }
 function showDirection(xsound: number, ysound: number, angle: number, obj: string) {
-    let ry:number
-    let rx:number
+    let ry: number
+    let rx: number
     [rx, ry] = directionTo(angle)
     serial.writeString(control.deviceSerialNumber() + (` plot ${rx},${ry} for direction ${angle}\n`))
     led.plot(rx, ry)
@@ -60,7 +60,7 @@ function showDirection(xsound: number, ysound: number, angle: number, obj: strin
     }
     led.unplot(rx, ry)
 }
-function draw () {
+function draw() {
     basic.clearScreen()
     led.plot(2, 3)
 }
@@ -68,7 +68,7 @@ function debugMessage(message: string, direction: string) {
     if (message[0] != "s")
         serial.writeString("" + control.deviceSerialNumber() + (` ${direction} ${message}\n`))
 }
-function debugSendString (obj: string, x: number, y: number, speed: number, direction: number) {
+function debugSendString(obj: string, x: number, y: number, speed: number, direction: number) {
     let message = `${obj}:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`
     debugMessage(message, "is sending:")
     radio.sendString(message)
