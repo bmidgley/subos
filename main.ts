@@ -61,7 +61,6 @@ function showDirection(xsound: number, ysound: number, angle: number, obj: strin
     led.unplot(rx, ry)
 }
 function draw() {
-    basic.clearScreen()
     led.plot(2, 3)
 }
 function debugMessage(value: string, direction: string) {
@@ -122,7 +121,7 @@ radio.onReceivedString(function (message) {
     showDirection(xsound, ysound, rdirection, messages[0])
 })
 function init() {
-    gridsize = 50
+    gridsize = 10
     tspeed = 1.7
     direction = 0
     radio.setGroup(1)
@@ -154,7 +153,9 @@ let tdirection: number
 let tspeed: number
 init()
 basic.forever(function () {
-    control.waitMicros(500000)
+    control.waitMicros(10000)
+    basic.clearScreen()
+    draw()
     mines.forEach(mine => broadcastMine(mine))
     if (ttime > 0) {
         ttime += 0 - 1
@@ -163,14 +164,13 @@ basic.forever(function () {
         debugSendString("t", tx, ty, tspeed, tdirection)
         sound(tx, ty, 160)
     } else {
-        control.waitMicros(200000)
+        control.waitMicros(10000)
     }
-    speed = (0 - input.acceleration(Dimension.Y)) / 128
-    direction += 0 - input.acceleration(Dimension.X) / 4096
+    speed = (0 - input.acceleration(Dimension.Y)) / 16
+    direction += 0 - input.acceleration(Dimension.X) / 1024
     x += speed * Math.cos(direction) / 16
     y += speed * Math.sin(direction) / 16
     if (speed > 4)
         debugSendString("s", x, y, speed, direction)
-    draw()
     debugMessage(`${direction/twopi}`, "turned")
 })
