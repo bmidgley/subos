@@ -64,13 +64,12 @@ function draw() {
     basic.clearScreen()
     led.plot(2, 3)
 }
-function debugMessage(message: string, direction: string) {
-    if (message[0] != "s")
-        serial.writeString("" + control.deviceSerialNumber() + (` ${direction} ${message}\n`))
+function debugMessage(value: string, direction: string) {
+    serial.writeString(`${direction}:${value}\n`)
 }
 function debugSendString(obj: string, x: number, y: number, speed: number, direction: number) {
     let message = `${obj}:${Math.round(x)}:${Math.round(y)}:${Math.round(speed)}:${direction}`
-    debugMessage(message, "is sending:")
+    //debugMessage(message, "sent")
     radio.sendString(message)
 }
 function plotMine(mine: number[]) {
@@ -129,12 +128,12 @@ function init() {
     radio.setGroup(1)
     for (let i = 0; i < gridsize; i++) { grid.push([]) }
 
-    x = randint(0, gridsize)
-    y = randint(0, gridsize)
+    x = gridsize / 2
+    y = gridsize / 2
 
-    for (let index = 0; index < 3; index++) {
-        mines.push([randint(0, gridsize), randint(0, gridsize)])
-    }
+    for (let mx = 0; mx < gridsize; mx += 3)
+        for (let my = 0; my < gridsize; my += 3)
+            mines.push([mx, my])
 
     music.playTone(788, music.beat(BeatFraction.Sixteenth))
 }
@@ -173,4 +172,5 @@ basic.forever(function () {
     if (speed > 4)
         debugSendString("s", x, y, speed, direction)
     draw()
+    debugMessage(`${direction/twopi}`, "turned")
 })
